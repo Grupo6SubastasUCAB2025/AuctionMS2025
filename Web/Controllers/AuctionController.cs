@@ -41,15 +41,15 @@ namespace MSAuction.Web.Controllers
         }
     
 
-    /*[HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteAuction(Guid id, [FromHeader] int userId)
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAuction(int id, [FromHeader] int userId)
     {
         var command = new DeleteAuctionCommand(id, userId);
         await _mediator.Send(command);
         return NoContent();
     }
 
-    [HttpGet("{id}")]
+    /*[HttpGet("{id}")]
     public async Task<IActionResult> GetAuction(Guid id)
     {
         var auction = await _mediator.Send(new GetAuctionByIdQuery(id));

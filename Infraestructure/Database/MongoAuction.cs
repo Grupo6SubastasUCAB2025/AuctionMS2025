@@ -1,7 +1,15 @@
-﻿namespace MSAuction.Infraestructure.Database
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+
+namespace MSAuction.Infraestructure.Database
 {
     public class MongoAuction
     {
+        [BsonId]  // Marca esta propiedad como el _id de MongoDB
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? Id { get; set; }  // Necesario para que Mongo no lance error con el campo _id
+
+
         public int AuctionId { get; set; }
         public int ProductId { get; set; }
         public required string Title { get; set; }

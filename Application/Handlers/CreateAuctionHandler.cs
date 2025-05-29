@@ -40,7 +40,16 @@ namespace MSAuction.Application.Handlers
                 Type = "normal"
             };
 
+            // Agregar la subasta a la base de datos para que se genere el ID
             await _repository.AddAsync(auction);
+
+            // El ID de la subasta ya debe estar disponible ahora
+            if (auction.Id == 0)
+            {
+                // Maneja el caso si no se generó un ID, aunque esto no debería ocurrir si tu repositorio está configurado correctamente
+                throw new InvalidOperationException("The auction ID was not generated correctly.");
+            }
+
             // Publicar el evento a RabbitMQ
             var factory = new ConnectionFactory() { HostName = "localhost" };
             try
@@ -52,7 +61,7 @@ namespace MSAuction.Application.Handlers
 
                     var auctionCreatedEvent = new AuctionCreatedEvent
                     {
-                        AuctionId = auction.Id,
+                        AuctionId = auction.Id,  // Ahora el ID es válido
                         ProductId = auction.ProductId,
                         Title = auction.Title,
                         Description = auction.Description,
@@ -79,13 +88,13 @@ namespace MSAuction.Application.Handlers
                 Console.WriteLine($"Error while publishing to RabbitMQ: {ex.Message}");
             }
 
+            // Programar el trabajo en Hangfire para finalizar la subasta
             BackgroundJob.Schedule<AuctionBackgroundService>(
                 x => x.FinalizeAuction(auction.Id),
                 auction.EndDate
             );
 
-
-            return auction.Id; // ID generado por la base de datos (Serial)
+            return auction.Id; // Ahora deberías devolver el ID correcto
         }
 
 

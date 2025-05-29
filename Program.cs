@@ -11,12 +11,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using MSAuction.Infraestructure.Persistence;
 using MongoDB.Driver;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 var mongoClient = new MongoClient("mongodb://localhost:27017");
 var consumerC = new AuctionCreatedConsumer(mongoClient);
 _ = Task.Run(() => consumerC.StartListening());
-var consumerD = new AuctionUpdatedConsumer(mongoClient);
+var consumerU = new AuctionUpdatedConsumer(mongoClient);
+_ = Task.Run(() => consumerU.StartListening());
+var consumerD = new AuctionDeletedConsumer(mongoClient);
 _ = Task.Run(() => consumerD.StartListening());
 // Add services to the container.
 
@@ -41,7 +44,27 @@ builder.Services.AddHangfire(config =>
 });
 builder.Services.AddHangfireServer();
 builder.Services.AddScoped<IAuctionFinalizer, AuctionFinalizer>();
+builder.Services.AddSingleton<IMongoClient>(sp =>
+{
+    var mongoConnectionString = builder.Configuration.GetConnectionString("MongoDb"); // Tu cadena de conexión
+    return new MongoClient(mongoConnectionString);
+});
+builder.Services.AddSingleton<IMongoDatabase>(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    var databaseName = builder.Configuration.GetValue<string>("MongoDbSettings:Database");
+    return client.GetDatabase(databaseName);
+});
+//builder.Services.AddScoped<IMongoAuctionRepository, MongoAuctionRepository>();
 builder.Services.AddScoped<IBackgroundJobClient, BackgroundJobClient>();
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost");
+
+    });
+});
 
 var app = builder.Build();
 
