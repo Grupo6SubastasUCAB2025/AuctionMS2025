@@ -1,0 +1,21 @@
+
+# Ignorar compilaciones y binarios
+bin/
+obj/
+*.exe
+*.dll
+
+# Ignorar dependencias
+node_modules/
+__pycache__/
+project.assets.json
+
+# Ignorar configuraciones de IDE
+.vs/
+*.suo
+*.user
+
+# Ignorar archivos temporales y logs
+*.log
+Thumbs.db
+.DS_Store
