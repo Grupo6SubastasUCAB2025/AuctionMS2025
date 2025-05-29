@@ -24,7 +24,7 @@ namespace MSAuction.Web.Controllers
             return Ok(auctionId);
         }
 
-        /*[HttpPut("{id}")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> EditAuction(int id, [FromBody] AuctionDto dto, [FromHeader] int userId)
         {
             var command = new UpdateAuctionCommand(id, dto, userId);
@@ -41,7 +41,7 @@ namespace MSAuction.Web.Controllers
         }
     
 
-    [HttpDelete("{id}")]
+    /*[HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAuction(Guid id, [FromHeader] int userId)
     {
         var command = new DeleteAuctionCommand(id, userId);

@@ -16,8 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 var mongoClient = new MongoClient("mongodb://localhost:27017");
 var consumerC = new AuctionCreatedConsumer(mongoClient);
 _ = Task.Run(() => consumerC.StartListening());
-//var consumerD = new AuctionUpdatedConsumer(mongoClient);
-//_ = Task.Run(() => consumerD.StartListening());
+var consumerD = new AuctionUpdatedConsumer(mongoClient);
+_ = Task.Run(() => consumerD.StartListening());
 // Add services to the container.
 
 builder.Services.AddControllers();
