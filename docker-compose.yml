@@ -1,0 +1,63 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345679
+      POSTGRES_DB: subastas_db
+    ports:
+      - "5433:5433"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672" # Interfaz web
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  hangfire:
+    image: hangfireio/hangfire:latest
+    ports:
+      - "5201:80" # Cambia el puerto si es necesario
+
+  auction-api:
+    build:
+      context: .
+      dockerfile: Auction.API/Dockerfile
+    ports:
+      - "5201:80"
+    depends_on:
+      - postgres
+      - mongodb
+      - rabbitmq
+    environment:
+      ConnectionStrings__Postgres: Host=postgres;Database=auctiondb;Username=auctionuser;Password=auctionpass
+      ConnectionStrings__Mongo: mongodb://mongodb:27017
+      RabbitMQ__Host: rabbitmq
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Gateway/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - msauction
+
+volumes:
+  pgdata:
+  mongodata:

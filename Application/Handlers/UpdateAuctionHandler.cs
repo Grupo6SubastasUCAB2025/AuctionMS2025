@@ -11,10 +11,12 @@ namespace MSAuction.Application.Handlers
     public class UpdateAuctionHandler : IRequestHandler<UpdateAuctionCommand, bool>
     {
         private readonly IAuctionRepository _repository;
+        private readonly IAuctionEventPublisher _eventPublisher;
 
-        public UpdateAuctionHandler(IAuctionRepository repository)
+        public UpdateAuctionHandler(IAuctionRepository repository, IAuctionEventPublisher eventPublisher)
         {
             _repository = repository;
+            _eventPublisher = eventPublisher;
         }
 
         public async Task<bool> Handle(UpdateAuctionCommand request, CancellationToken cancellationToken)
@@ -46,27 +48,16 @@ namespace MSAuction.Application.Handlers
             // Guardar los cambios
             await _repository.UpdateAsync(auction);
 
-            // Publicar evento a RabbitMQ para actualizar la subasta en MongoDB
-            var factory = new ConnectionFactory() { HostName = "localhost" };
-            using (var connection = factory.CreateConnection())
-            using (var channel = connection.CreateModel())
+            var auctionUpdatedEvent = new AuctionUpdatedEvent
             {
-                channel.QueueDeclare(queue: "auction_updated_queue", durable: false, exclusive: false, autoDelete: false, arguments: null);
+                AuctionId = auction.Id,
+                Title = auction.Title,
+                InitialPrice = auction.InitialPrice,
+                EndDate = auction.EndDate,
+                Status = auction.Status
+            };
 
-                var auctionUpdatedEvent = new AuctionUpdatedEvent
-                {
-                    AuctionId = auction.Id,
-                    Title = auction.Title,
-                    InitialPrice = auction.InitialPrice,
-                    EndDate = auction.EndDate,
-                    Status = auction.Status
-                };
-
-                var json = JsonConvert.SerializeObject(auctionUpdatedEvent);
-                var body = Encoding.UTF8.GetBytes(json);
-
-                channel.BasicPublish(exchange: "", routingKey: "auction_updated_queue", basicProperties: null, body: body);
-            }
+            _eventPublisher.PublishAuctionUpdatedEvent(auctionUpdatedEvent);
 
             return true;
         }

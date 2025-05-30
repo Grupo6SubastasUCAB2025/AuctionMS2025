@@ -12,6 +12,7 @@ using Microsoft.OpenApi.Models;
 using MSAuction.Infraestructure.Persistence;
 using MongoDB.Driver;
 using MassTransit;
+using MSAuction.Infraestructure.EventBus.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 var mongoClient = new MongoClient("mongodb://localhost:27017");
@@ -43,6 +44,7 @@ builder.Services.AddHangfire(config =>
           .UsePostgreSqlStorage(builder.Configuration.GetConnectionString("Postgres"));
 });
 builder.Services.AddHangfireServer();
+builder.Services.AddScoped<IAuctionEventPublisher, AuctionEventPublisher>();
 builder.Services.AddScoped<IAuctionFinalizer, AuctionFinalizer>();
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {

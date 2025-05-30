@@ -1,14 +1,18 @@
-﻿using MSAuction.Application.Interfaces;
+﻿using MassTransit;
+using MSAuction.Application.Interfaces;
+using MSAuction.Infraestructure.EventBus.Events;
 
 namespace MSAuction.Application.Services
 {
     public class AuctionFinalizer : IAuctionFinalizer
     {
         private readonly IAuctionRepository _repository;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public AuctionFinalizer(IAuctionRepository repository)
+        public AuctionFinalizer(IAuctionRepository repository, IPublishEndpoint publishEndpoint)
         {
             _repository = repository;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task FinalizeAuctionAsync(int auctionId)
@@ -19,7 +23,7 @@ namespace MSAuction.Application.Services
             auction.MarkAsEnded(); // Método de dominio que cambia el estado
             await _repository.UpdateAsync(auction);
 
-            // Aquí también podrías publicar un evento a RabbitMQ
+            await _publishEndpoint.Publish(new AuctionEndedEvent(auctionId));
         }
     }
 }
